@@ -7,6 +7,7 @@ import { validateUsername } from "../components/validation";
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [focused, setFocused] = useState(null);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -25,97 +26,123 @@ function Login() {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        backgroundColor: "#fff0f5", // light lavender-pink
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h2
-        style={{
-          fontWeight: "bold",
-          background: "linear-gradient(90deg, lavender, pink)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          fontSize: "2.5rem",
-          marginBottom: "2rem",
-          textAlign: "center",
-        }}
-      >
-        Login
-      </h2>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <h2 style={styles.heading}>Welcome Back 👋</h2>
 
-      <div style={{ marginBottom: "1.5rem", width: "300px" }}>
-        <label
-          style={{
-            fontWeight: "bold",
-            color: "pink",
-            display: "block",
-            marginBottom: "0.5rem",
-          }}
-        >
-          Username
-        </label>
-        <input
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "0.5rem",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-          }}
-        />
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Username</label>
+          <input
+            placeholder="Enter Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            onFocus={() => setFocused("username")}
+            onBlur={() => setFocused(null)}
+            style={{
+              ...styles.input,
+              ...(focused === "username" && styles.inputFocus),
+            }}
+          />
+        </div>
+
+        <div style={styles.inputGroup}>
+          <label style={styles.label}>Password</label>
+          <input
+            type="password"
+            placeholder="Enter Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onFocus={() => setFocused("password")}
+            onBlur={() => setFocused(null)}
+            style={{
+              ...styles.input,
+              ...(focused === "password" && styles.inputFocus),
+            }}
+          />
+        </div>
+
+        <button onClick={handleLogin} style={styles.button}>
+          Login
+        </button>
       </div>
-
-      <div style={{ marginBottom: "2rem", width: "300px" }}>
-        <label
-          style={{
-            fontWeight: "bold",
-            color: "pink",
-            display: "block",
-            marginBottom: "0.5rem",
-          }}
-        >
-          Password
-        </label>
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            width: "100%",
-            padding: "0.5rem",
-            borderRadius: "5px",
-            border: "1px solid #ccc",
-          }}
-        />
-      </div>
-
-      <button
-        onClick={handleLogin}
-        style={{
-          padding: "0.8rem 2rem",
-          borderRadius: "8px",
-          border: "none",
-          background: "linear-gradient(90deg, lavender, pink)",
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "1rem",
-          cursor: "pointer",
-        }}
-      >
-        Login
-      </button>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: "100vh",
+    background: "linear-gradient(135deg, #d4fc79, #96e6a1)",
+    fontFamily: "Poppins, sans-serif",
+  },
+
+  card: {
+    background: "rgba(255, 255, 255, 0.2)",
+    backdropFilter: "blur(15px)",
+    padding: "40px",
+    borderRadius: "20px",
+    boxShadow: "0 15px 35px rgba(0,0,0,0.2)",
+    width: "350px",
+    textAlign: "center",
+    border: "1px solid rgba(255,255,255,0.3)",
+  },
+
+  heading: {
+    fontSize: "28px",
+    marginBottom: "30px",
+    background: "linear-gradient(90deg, #ff758c, #ff7eb3)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    fontWeight: "bold",
+  },
+
+  inputGroup: {
+    marginBottom: "20px",
+    textAlign: "left",
+  },
+
+  label: {
+    fontWeight: "600",
+    color: "#333",
+    marginBottom: "5px",
+    display: "block",
+  },
+
+  input: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "10px",
+    border: "none",
+    outline: "none",
+    fontSize: "14px",
+    background: "rgba(255,255,255,0.9)",
+    boxShadow: "inset 0 2px 5px rgba(0,0,0,0.1)",
+    transition: "all 0.3s ease",
+  },
+
+  // 🌟 Glow Effect
+  inputFocus: {
+    boxShadow:
+      "0 0 0 3px rgba(255, 118, 140, 0.4), 0 8px 20px rgba(255,118,140,0.3)",
+    transform: "scale(1.02)",
+  },
+
+  button: {
+    width: "100%",
+    padding: "12px",
+    borderRadius: "12px",
+    border: "none",
+    background: "linear-gradient(90deg, #ff758c, #ff7eb3)",
+    color: "white",
+    fontWeight: "bold",
+    fontSize: "16px",
+    cursor: "pointer",
+    transition: "0.3s",
+    boxShadow: "0 8px 20px rgba(255, 118, 140, 0.4)",
+  },
+};
 
 export default Login;

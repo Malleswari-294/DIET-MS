@@ -1,74 +1,99 @@
-import React, { useState } from "react";
-import { db, auth } from "../firebase";
-import { doc, setDoc } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
+import { auth, db } from "../firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 
-function Details() {
-  const [name, setName] = useState("");
-  const [age, setAge] = useState("");
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [target, setTarget] = useState("3 Months");
-  const [problem, setProblem] = useState("");
-  const [dietPlan, setDietPlan] = useState(""); // API response
-
+function Dashboard() {
+  const [userData, setUserData] = useState(null);
+  const [mealPlan, setMealPlan] = useState([]);
+  const [loadingMeals, setLoadingMeals] = useState(false);
+  const [weightChange, setWeightChange] = useState("");
   const navigate = useNavigate();
 
-  const getDietPlanFromAPI = async () => {
+  // Fetch user data
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, "users", user.uid);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setUserData(data);
+          setWeightChange(data.weightChange || "");
+        }
+      } else {
+        navigate("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
+
+  // 🔥 Dynamic Meal Plan Fetch
+  useEffect(() => {
+    if (!userData) return; // wait for user data
+
+    const fetchMealPlan = async () => {
+      try {
+        setLoadingMeals(true);
+
+        const response = await fetch(
+          `http://localhost:5000/api/meal-plan?target=${encodeURIComponent(
+            userData.target
+          )}&weightChange=${encodeURIComponent(weightChange)}`
+        );
+
+        const data = await response.json();
+        setMealPlan(data.meals || []);
+      } catch (err) {
+        console.error("Error fetching meals:", err);
+      } finally {
+        setLoadingMeals(false);
+      }
+    };
+
+    fetchMealPlan();
+  }, [userData, weightChange]); // 👈 runs when these change
+
+  // Update weightChange in Firestore
+  const handleWeightChange = async (e) => {
+    const value = e.target.value;
+    setWeightChange(value);
+
+    const user = auth.currentUser;
+    if (!user) return;
+
     try {
-      const response = await fetch("https://api.example.com/getDietPlan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ age, weight, height, target, problem })
+      await updateDoc(doc(db, "users", user.uid), {
+        weightChange: value,
       });
 
-      const data = await response.json();
-      return data.dietPlan || "No diet plan received";
-    } catch (error) {
-      console.error("API Error:", error);
-      return "Error fetching diet plan";
+      setUserData((prev) => ({
+        ...prev,
+        weightChange: value,
+      }));
+    } catch (err) {
+      console.error("Error updating weightChange:", err);
     }
   };
 
-  const saveDetails = async () => {
-    const user = auth.currentUser;
-    if (!user) {
-      alert("User not logged in");
-      return;
-    }
-
-    // Call API for diet plan
-    const plan = await getDietPlanFromAPI();
-    setDietPlan(plan);
-
-    try {
-      await setDoc(doc(db, "users", user.uid), {
-        name,
-        age,
-        weight,
-        height,
-        target,
-        problem,
-        dietPlan: plan // store in Firestore
-      });
-
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Error:", error);
-    }
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/login");
   };
 
   return (
     <div
       style={{
+        minHeight: "100vh",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
+        justifyContent: "flex-start",
         backgroundColor: "#fff0f5",
+        padding: "2rem",
         fontFamily: "Arial, sans-serif",
       }}
     >
@@ -78,40 +103,123 @@ function Details() {
           background: "linear-gradient(90deg, lavender, pink)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
-          fontSize: "2.2rem",
+          fontSize: "2.5rem",
           marginBottom: "2rem",
-          textAlign: "center",
         }}
       >
-        Enter Details
+        Dashboard
       </h2>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "300px" }}>
-        <label style={{ fontWeight: "bold", color: "pink" }}>Name</label>
-        <input placeholder="Name" onChange={e => setName(e.target.value)} style={{ padding: "0.5rem", borderRadius: "5px", border: "1px solid #ccc" }} />
+      {userData ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "1rem",
+            width: "350px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#ffe6f0",
+              padding: "1rem",
+              borderRadius: "10px",
+              boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
+            }}
+          >
+            <p><strong>Name:</strong> {userData.name}</p>
+            <p><strong>Age:</strong> {userData.age}</p>
+            <p><strong>Weight:</strong> {userData.weight} kg</p>
+            <p><strong>Height:</strong> {userData.height} inches</p>
+            <p><strong>Target:</strong> {userData.target}</p>
+            <p><strong>Problem:</strong> {userData.problem}</p>
 
-        <label style={{ fontWeight: "bold", color: "pink" }}>Age (years)</label>
-        <input placeholder="Age" onChange={e => setAge(e.target.value)} style={{ padding: "0.5rem", borderRadius: "5px", border: "1px solid #ccc" }} />
+            <label
+              style={{
+                fontWeight: "bold",
+                marginTop: "0.5rem",
+                display: "block",
+              }}
+            >
+              Weight Gain / Loss
+            </label>
 
-        <label style={{ fontWeight: "bold", color: "pink" }}>Weight (kgs)</label>
-        <input placeholder="Weight" onChange={e => setWeight(e.target.value)} style={{ padding: "0.5rem", borderRadius: "5px", border: "1px solid #ccc" }} />
+            <select
+              value={weightChange}
+              onChange={handleWeightChange}
+              style={{
+                padding: "0.5rem",
+                borderRadius: "5px",
+                border: "1px solid #ccc",
+                width: "100%",
+              }}
+            >
+              <option value="">Select</option>
+              <option value="-5">Lose 5 kgs</option>
+              <option value="-3">Lose 3 kgs</option>
+              <option value="-1">Lose 1 kg</option>
+              <option value="0">No change</option>
+              <option value="1">Gain 1 kg</option>
+              <option value="3">Gain 3 kgs</option>
+              <option value="5">Gain 5 kgs</option>
+            </select>
 
-        <label style={{ fontWeight: "bold", color: "pink" }}>Height (inches)</label>
-        <input placeholder="Height" onChange={e => setHeight(e.target.value)} style={{ padding: "0.5rem", borderRadius: "5px", border: "1px solid #ccc" }} />
+            {userData.dietPlan && (
+              <>
+                <p
+                  style={{
+                    marginTop: "1rem",
+                    fontWeight: "bold",
+                    color: "pink",
+                  }}
+                >
+                  Suggested Diet Plan:
+                </p>
+                <p>{userData.dietPlan}</p>
+              </>
+            )}
+          </div>
 
-        <label style={{ fontWeight: "bold", color: "pink" }}>Target</label>
-        <select onChange={e => setTarget(e.target.value)} style={{ padding: "0.5rem", borderRadius: "5px", border: "1px solid #ccc" }}>
-          <option>3 Months</option>
-          <option>6 Months</option>
-          <option>1 Year</option>
-        </select>
+          <div
+            style={{
+              marginTop: "2rem",
+              backgroundColor: "#ffe6f0",
+              padding: "1rem",
+              borderRadius: "10px",
+              boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
+            }}
+          >
+            <h3 style={{ marginBottom: "1rem" }}>
+              Today's Meal Plan
+            </h3>
 
-        <label style={{ fontWeight: "bold", color: "pink" }}>Your Problem</label>
-        <input placeholder="Your Problem" onChange={e => setProblem(e.target.value)} style={{ padding: "0.5rem", borderRadius: "5px", border: "1px solid #ccc" }} />
-      </div>
+            {loadingMeals ? (
+              <p>Loading meals...</p>
+            ) : mealPlan.length > 0 ? (
+              mealPlan.map((meal) => (
+                <div key={meal.id} style={{ marginBottom: "1rem" }}>
+                  <p><strong>{meal.title}</strong></p>
+                  <p>Ready in: {meal.readyInMinutes} mins</p>
+                  <a
+                    href={meal.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    View Recipe
+                  </a>
+                </div>
+              ))
+            ) : (
+              <p>No meals available</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p>Loading your data...</p>
+      )}
 
       <button
-        onClick={saveDetails}
+        onClick={handleLogout}
         style={{
           marginTop: "2rem",
           padding: "0.8rem 2rem",
@@ -124,27 +232,10 @@ function Details() {
           cursor: "pointer",
         }}
       >
-        Next
+        Logout
       </button>
-
-      {dietPlan && (
-        <div
-          style={{
-            marginTop: "2rem",
-            padding: "1rem",
-            width: "300px",
-            backgroundColor: "#ffe6f0",
-            borderRadius: "8px",
-            color: "#333",
-            textAlign: "center",
-          }}
-        >
-          <h3 style={{ fontWeight: "bold", color: "pink" }}>Suggested Diet Plan</h3>
-          <p>{dietPlan}</p>
-        </div>
-      )}
     </div>
   );
 }
 
-export default Details;
+export default Dashboard;

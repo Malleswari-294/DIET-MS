@@ -40,8 +40,8 @@ function Home() {
   };
 
   const circleButton = (color) => ({
-    width: "180px",
-    height: "180px",
+    width: "130px",
+    height: "130px",
     borderRadius: "50%",
     border: "none",
     fontSize: "22px",
@@ -55,9 +55,9 @@ function Home() {
 
   return (
     <div style={container}>
-      <div style={header}>🥗 Diet App</div>
+      <div style={header}>🥗 DIET MANAGEMENT SYSTEM 🥗</div>
 
-      <h1 style={title}>Welcome to Diet App</h1>
+      <h1 style={title}>WELCOME TO YOUR DIET</h1>
 
       <div style={buttonContainer}>
         <button
