@@ -11,7 +11,6 @@ function Dashboard() {
   const [weightChange, setWeightChange] = useState("");
   const navigate = useNavigate();
 
-  // Fetch user data
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -31,20 +30,17 @@ function Dashboard() {
     return () => unsubscribe();
   }, [navigate]);
 
-  // 🔥 Dynamic Meal Plan Fetch
   useEffect(() => {
-    if (!userData) return; // wait for user data
+    if (!userData) return;
 
     const fetchMealPlan = async () => {
       try {
         setLoadingMeals(true);
-
         const response = await fetch(
           `http://localhost:5000/api/meal-plan?target=${encodeURIComponent(
             userData.target
           )}&weightChange=${encodeURIComponent(weightChange)}`
         );
-
         const data = await response.json();
         setMealPlan(data.meals || []);
       } catch (err) {
@@ -55,9 +51,8 @@ function Dashboard() {
     };
 
     fetchMealPlan();
-  }, [userData, weightChange]); // 👈 runs when these change
+  }, [userData, weightChange]);
 
-  // Update weightChange in Firestore
   const handleWeightChange = async (e) => {
     const value = e.target.value;
     setWeightChange(value);
@@ -85,48 +80,13 @@ function Dashboard() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        backgroundColor: "#fff0f5",
-        padding: "2rem",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h2
-        style={{
-          fontWeight: "bold",
-          background: "linear-gradient(90deg, lavender, pink)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          fontSize: "2.5rem",
-          marginBottom: "2rem",
-        }}
-      >
-        Dashboard
-      </h2>
+    <div style={styles.container}>
+      <h2 style={styles.heading}>✨ My Dashboard ✨</h2>
 
       {userData ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-            width: "350px",
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "#ffe6f0",
-              padding: "1rem",
-              borderRadius: "10px",
-              boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
-            }}
-          >
+        <div style={styles.wrapper}>
+          {/* User Card */}
+          <div style={styles.card}>
             <p><strong>Name:</strong> {userData.name}</p>
             <p><strong>Age:</strong> {userData.age}</p>
             <p><strong>Weight:</strong> {userData.weight} kg</p>
@@ -134,25 +94,14 @@ function Dashboard() {
             <p><strong>Target:</strong> {userData.target}</p>
             <p><strong>Problem:</strong> {userData.problem}</p>
 
-            <label
-              style={{
-                fontWeight: "bold",
-                marginTop: "0.5rem",
-                display: "block",
-              }}
-            >
+            <label style={styles.label}>
               Weight Gain / Loss
             </label>
 
             <select
               value={weightChange}
               onChange={handleWeightChange}
-              style={{
-                padding: "0.5rem",
-                borderRadius: "5px",
-                border: "1px solid #ccc",
-                width: "100%",
-              }}
+              style={styles.select}
             >
               <option value="">Select</option>
               <option value="-5">Lose 5 kgs</option>
@@ -163,49 +112,26 @@ function Dashboard() {
               <option value="3">Gain 3 kgs</option>
               <option value="5">Gain 5 kgs</option>
             </select>
-
-            {userData.dietPlan && (
-              <>
-                <p
-                  style={{
-                    marginTop: "1rem",
-                    fontWeight: "bold",
-                    color: "pink",
-                  }}
-                >
-                  Suggested Diet Plan:
-                </p>
-                <p>{userData.dietPlan}</p>
-              </>
-            )}
           </div>
 
-          <div
-            style={{
-              marginTop: "2rem",
-              backgroundColor: "#ffe6f0",
-              padding: "1rem",
-              borderRadius: "10px",
-              boxShadow: "0px 4px 6px rgba(0,0,0,0.1)",
-            }}
-          >
-            <h3 style={{ marginBottom: "1rem" }}>
-              Today's Meal Plan
-            </h3>
+          {/* Meal Plan Card */}
+          <div style={styles.card}>
+            <h3 style={{ marginBottom: "1rem" }}>🍽 Today's Meal Plan</h3>
 
             {loadingMeals ? (
               <p>Loading meals...</p>
             ) : mealPlan.length > 0 ? (
               mealPlan.map((meal) => (
-                <div key={meal.id} style={{ marginBottom: "1rem" }}>
-                  <p><strong>{meal.title}</strong></p>
+                <div key={meal.id} style={styles.mealItem}>
+                  <p style={{ fontWeight: "bold" }}>{meal.title}</p>
                   <p>Ready in: {meal.readyInMinutes} mins</p>
                   <a
                     href={meal.sourceUrl}
                     target="_blank"
                     rel="noreferrer"
+                    style={styles.link}
                   >
-                    View Recipe
+                    View Recipe →
                   </a>
                 </div>
               ))
@@ -218,24 +144,82 @@ function Dashboard() {
         <p>Loading your data...</p>
       )}
 
-      <button
-        onClick={handleLogout}
-        style={{
-          marginTop: "2rem",
-          padding: "0.8rem 2rem",
-          borderRadius: "8px",
-          border: "none",
-          background: "linear-gradient(90deg, lavender, pink)",
-          color: "white",
-          fontWeight: "bold",
-          fontSize: "1rem",
-          cursor: "pointer",
-        }}
-      >
+      <button onClick={handleLogout} style={styles.button}>
         Logout
       </button>
     </div>
   );
 }
+
+const styles = {
+  container: {
+    minHeight: "100vh",
+    background: "linear-gradient(135deg, #fbc2eb, #a6c1ee)",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "3rem 1rem",
+    fontFamily: "Poppins, sans-serif",
+  },
+  heading: {
+    fontSize: "2.8rem",
+    fontWeight: "700",
+    color: "#fff",
+    marginBottom: "2rem",
+    textShadow: "2px 2px 10px rgba(0,0,0,0.2)",
+  },
+  wrapper: {
+    width: "100%",
+    maxWidth: "500px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "2rem",
+  },
+  card: {
+    backdropFilter: "blur(15px)",
+    background: "rgba(255, 255, 255, 0.25)",
+    padding: "2rem",
+    borderRadius: "20px",
+    boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+    color: "#333",
+    transition: "0.3s ease",
+  },
+  label: {
+    marginTop: "1rem",
+    fontWeight: "600",
+    display: "block",
+  },
+  select: {
+    marginTop: "0.5rem",
+    padding: "0.6rem",
+    width: "100%",
+    borderRadius: "10px",
+    border: "none",
+    outline: "none",
+  },
+  mealItem: {
+    marginBottom: "1.5rem",
+    padding: "1rem",
+    background: "rgba(255,255,255,0.4)",
+    borderRadius: "10px",
+  },
+  link: {
+    color: "#6a11cb",
+    fontWeight: "600",
+    textDecoration: "none",
+  },
+  button: {
+    marginTop: "2rem",
+    padding: "0.9rem 2.5rem",
+    borderRadius: "30px",
+    border: "none",
+    background: "linear-gradient(90deg, #ff758c, #ff7eb3)",
+    color: "white",
+    fontWeight: "bold",
+    fontSize: "1rem",
+    cursor: "pointer",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.2)",
+  },
+};
 
 export default Dashboard;
