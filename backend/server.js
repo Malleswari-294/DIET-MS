@@ -1,7 +1,7 @@
 import express from "express";
-import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 dotenv.config();
 
@@ -11,33 +11,66 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+
+// Home route
 app.get("/", (req, res) => {
-  res.send("Backend is running");
+  res.send("Gemini AI backend running");
 });
 
+
+// ------------------------------
+// Gemini Meal Plan API (GET)
+// ------------------------------
 app.get("/api/meal-plan", async (req, res) => {
+
   try {
-    const { target, weightChange = 0, diet } = req.query;
-    if (!target) return res.status(400).json({ error: "targetCalories is required" });
 
-    let adjustedCalories = parseInt(target);
-    const weightNum = parseInt(weightChange);
-    if (!isNaN(weightNum)) adjustedCalories += weightNum * 500;
+    const { diet = "balanced diet" } = req.query;
 
-    const url = new URL("https://api.spoonacular.com/mealplanner/generate");
-    url.searchParams.append("timeFrame", "day");
-    url.searchParams.append("targetCalories", adjustedCalories);
-    if (diet) url.searchParams.append("diet", diet);
-    url.searchParams.append("apiKey", process.env.SPOONACULAR_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash"
+    });
 
-    const response = await fetch(url.toString());
-    const data = await response.json();
+    const prompt = `
+Create a simple meal plan for ${diet}.
+Give:
+Breakfast
+Lunch
+Dinner
+`;
 
-    res.json({ meals: data.meals || [], nutrients: data.nutrients || {} });
+    const result = await model.generateContent(prompt);
+
+    const text = result.response.text();
+
+    // Convert Gemini response into meals array
+    const meals = [
+      { title: "Breakfast", description: text },
+      { title: "Lunch", description: text },
+      { title: "Dinner", description: text }
+    ];
+
+    res.json({ meals });
+
   } catch (error) {
-    console.error("Error fetching meal plan:", error);
-    res.status(500).json({ error: "Failed to fetch meal plan" });
+
+    console.error("Gemini error:", error);
+
+    res.json({
+      meals: [
+        { title: "Breakfast", description: "Oatmeal with fruits" },
+        { title: "Lunch", description: "Rice with vegetables" },
+        { title: "Dinner", description: "Vegetable soup" }
+      ]
+    });
+
   }
+
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
