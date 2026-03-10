@@ -47,9 +47,27 @@ Dinner
 
     // Convert Gemini response into meals array
     const meals = [
-      { title: "Breakfast", description: text },
-      { title: "Lunch", description: text },
-      { title: "Dinner", description: text }
+      { 
+        id: 1, 
+        title: "Breakfast", 
+        description: text,
+        readyInMinutes: 20,
+        sourceUrl: "#"
+      },
+      { 
+        id: 2, 
+        title: "Lunch", 
+        description: text,
+        readyInMinutes: 30,
+        sourceUrl: "#"
+      },
+      { 
+        id: 3, 
+        title: "Dinner", 
+        description: text,
+        readyInMinutes: 25,
+        sourceUrl: "#"
+      }
     ];
 
     res.json({ meals });
@@ -60,9 +78,27 @@ Dinner
 
     res.json({
       meals: [
-        { title: "Breakfast", description: "Oatmeal with fruits" },
-        { title: "Lunch", description: "Rice with vegetables" },
-        { title: "Dinner", description: "Vegetable soup" }
+        { 
+          id: 1, 
+          title: "Breakfast", 
+          description: "Oatmeal with fruits",
+          readyInMinutes: 20,
+          sourceUrl: "#"
+        },
+        { 
+          id: 2, 
+          title: "Lunch", 
+          description: "Rice with vegetables",
+          readyInMinutes: 30,
+          sourceUrl: "#"
+        },
+        { 
+          id: 3, 
+          title: "Dinner", 
+          description: "Vegetable soup",
+          readyInMinutes: 25,
+          sourceUrl: "#"
+        }
       ]
     });
 
